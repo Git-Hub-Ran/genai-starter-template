@@ -1,0 +1,6 @@
+#the packages the backend needs:
+fastapi==0.115.6 #builds the API
+uvicorn[standard]==0.34.0 #the server that runs the app on my computer.
+gunicorn==23.0.0 #used on Azure.It manages several uvicorn workers in production, so the app can handle more users, and it restarts a worker if one crashes.
+openai==1.59.7 #the library that calls Azure OpenAI.
+pydantic-settings==2.7.1 #used by config.py

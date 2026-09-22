@@ -1,0 +1,13 @@
+#files Git must never upload:
+
+
+#has my secrets:
+.env 
+#it's big and anyone can rebuild it with pip install:
+.venv/
+#Python and pytest create automatically:
+__pycache__/
+.pytest_cache/
+*.pyc
+#junk files from Mac:
+.DS_Store
