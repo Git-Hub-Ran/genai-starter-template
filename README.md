@@ -56,27 +56,64 @@ The app runs on http://localhost:8501 and the API test page on http://localhost:
 ## Deploy to Azure
 
 Both parts run as Python web apps on Azure App Service and share one plan.
+Replace `<app>` with a short unique name, `<rg>` with the resource group,
+and `<region>` with the region of my Azure OpenAI resource.
+
+Deploy early: the first deploy of each app takes 5 to 10 minutes.
+
+First, log in and find the resource group:
+
+```
+az login
+az group list --output table
+```
+
+
+If the login fails with a multi-factor message, run it again with the tenant id
+from the error: `az login --tenant <tenant-id>`.
+If no resource group is assigned to me, create one:
+`az group create --name <rg> --location <region>`
 
 Backend:
 
 ```
 cd backend
-az webapp up --name <app>-api --resource-group <rg> --plan <app>-plan --runtime "PYTHON:3.12" --sku B1
+az webapp up --name <app>-api --resource-group <rg> --plan <app>-plan --runtime "PYTHON:3.12" --sku B1 --location <region>
 az webapp config set --name <app>-api --resource-group <rg> --startup-file "gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"
-az webapp config appsettings set --name <app>-api --resource-group <rg> --settings AZURE_OPENAI_ENDPOINT=<endpoint> AZURE_OPENAI_API_KEY=<key> AZURE_OPENAI_DEPLOYMENT=<deployment> ALLOWED_ORIGINS=https://<app>-web.azurewebsites.net
+az webapp config appsettings set --name <app>-api --resource-group <rg> --settings AZURE_OPENAI_ENDPOINT=<endpoint> AZURE_OPENAI_API_KEY=<key> AZURE_OPENAI_DEPLOYMENT=<deployment> AZURE_OPENAI_API_VERSION=<api-version> ALLOWED_ORIGINS=https://<app>-web.azurewebsites.net
 ```
+
+
+Check: `https://<app>-api.azurewebsites.net/health` should show `"llm_configured": true`.
 
 Frontend:
 
 ```
-cd frontend
-az webapp up --name <app>-web --resource-group <rg> --plan <app>-plan --runtime "PYTHON:3.12" --sku B1
+cd ../frontend
+az webapp up --name <app>-web --resource-group <rg> --plan <app>-plan --runtime "PYTHON:3.12" --sku B1 --location <region>
 az webapp config set --name <app>-web --resource-group <rg> --web-sockets-enabled true --startup-file "python -m streamlit run app.py --server.port 8000 --server.address 0.0.0.0"
 az webapp config appsettings set --name <app>-web --resource-group <rg> --settings BACKEND_URL=https://<app>-api.azurewebsites.net
+az webapp restart --name <app>-web --resource-group <rg>
 ```
 
-If something fails, check the logs with `az webapp log tail --name <app>-api --resource-group <rg>`.
 
+Then open `https://<app>-web.azurewebsites.net`.
+
+Good to know:
+
+- The first deploy runs before the startup command is set, so it can end with
+  "Site failed to start" after 10 minutes. That is expected: set the startup
+  command, restart, and it works.
+- `az webapp up` is deprecated but still works. The replacement is
+  `az webapp create` plus `az webapp deploy`.
+- `az webapp up` saves defaults in a `.azure` folder inside the folder it runs
+  in, so later commands there can be shorter. It is in `.gitignore`.
+- Logs: `az webapp log tail --name <app>-api --resource-group <rg>`
+- Delete everything when finished (only a group I created myself):
+  `az group delete --name <rg> --yes --no-wait`
+  
+
+  
 ## Decisions
 
 - The API key stays on the server. The frontend never sees it.

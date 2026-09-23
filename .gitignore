@@ -11,3 +11,5 @@ __pycache__/
 *.pyc
 #junk files from Mac:
 .DS_Store
+#created by az webapp up:
+.azure/
