@@ -61,7 +61,7 @@ and `<region>` with the region of my Azure OpenAI resource.
 
 Deploy early: the first deploy of each app takes 5 to 10 minutes.
 
-First, log in and find the resource group:
+First, log in and find or create the resource group:
 
 ```
 # Signs the CLI in to my Azure account, so the next commands can act for me.
